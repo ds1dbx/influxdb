@@ -632,7 +632,7 @@ func (h *Handler) serveWrite(w http.ResponseWriter, r *http.Request, user meta.U
 	}
 
 	body := r.Body
-	body = string.Replace(body, "%20", " ", -1)	// 2017.10.31 - Remove %20 from body strings
+	body = strings.Replace(body, "%20", " ", -1)	// 2017.10.31 - Remove %20 from body strings
 	
 	if h.Config.MaxBodySize > 0 {
 		body = truncateReader(body, int64(h.Config.MaxBodySize))
