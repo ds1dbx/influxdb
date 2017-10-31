@@ -676,14 +676,15 @@ func (h *Handler) serveWrite(w http.ResponseWriter, r *http.Request, user meta.U
 	}
 	atomic.AddInt64(&h.stats.WriteRequestBytesReceived, int64(buf.Len()))
 
-	dlr = strings.Replace(buf.Bytes(), "%20", " ", -1)	// 2017.10.31 - Remove %20 from buffer
+	var dlr string
+	dlr = strings.Replace(buf.String(), "%20", " ", -1)	// 2017.10.31 - Remove %20 from buffer
 	
 	if h.Config.WriteTracing {
 		h.Logger.Info(fmt.Sprintf("Write body received by handler: %s", dlr)) // 2017.10.31 - Check dlr string
 	}
 
-	// 2017.10.31 - Change 1st argument with adjusted string (%20 removed)
-	points, parseError := models.ParsePointsWithPrecision(dlr, time.Now().UTC(), r.URL.Query().Get("precision"))
+	// 2017.10.31 - Change 1st argument (%20 removed byte array)
+	points, parseError := models.ParsePointsWithPrecision([]byte(dlr), time.Now().UTC(), r.URL.Query().Get("precision"))
 	// Not points parsed correctly so return the error now
 	if parseError != nil && len(points) == 0 {
 		if parseError.Error() == "EOF" {
