@@ -632,7 +632,6 @@ func (h *Handler) serveWrite(w http.ResponseWriter, r *http.Request, user meta.U
 	}
 
 	body := r.Body
-	body = strings.Replace(body, "%20", " ", -1)	// 2017.10.31 - Remove %20 from body strings
 	
 	if h.Config.MaxBodySize > 0 {
 		body = truncateReader(body, int64(h.Config.MaxBodySize))
@@ -677,11 +676,14 @@ func (h *Handler) serveWrite(w http.ResponseWriter, r *http.Request, user meta.U
 	}
 	atomic.AddInt64(&h.stats.WriteRequestBytesReceived, int64(buf.Len()))
 
+	dlr = strings.Replace(buf.Bytes(), "%20", " ", -1)	// 2017.10.31 - Remove %20 from buffer
+	
 	if h.Config.WriteTracing {
-		h.Logger.Info(fmt.Sprintf("Write body received by handler: %s", buf.Bytes()))
+		h.Logger.Info(fmt.Sprintf("Write body received by handler: %s", dlr)) // 2017.10.31 - Check dlr string
 	}
 
-	points, parseError := models.ParsePointsWithPrecision(buf.Bytes(), time.Now().UTC(), r.URL.Query().Get("precision"))
+	// 2017.10.31 - Change 1st argument with adjusted string (%20 removed)
+	points, parseError := models.ParsePointsWithPrecision(dlr, time.Now().UTC(), r.URL.Query().Get("precision"))
 	// Not points parsed correctly so return the error now
 	if parseError != nil && len(points) == 0 {
 		if parseError.Error() == "EOF" {
